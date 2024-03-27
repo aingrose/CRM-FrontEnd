@@ -26,7 +26,7 @@ function Login() {
        
             if (response.status === 200) {
                 alert("Login successfully");
-                navingate("/table")
+                 navingate("/register")
 
             } else {
                 alert("Invalid credential");
