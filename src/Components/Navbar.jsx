@@ -17,7 +17,7 @@ function Navbar() {
                     <a className="nav-link active" aria-current="page" href="#">Home</a>
                     <Link to = "/newRegister" className="nav-link active" >Register</Link>
                     <Link to="/login" className="nav-link active" >Login</Link> 
-                    <Link to="/register" style={{marginLeft: "1000px"}} type="button" className="tgbtn btn btn-dark ">ADD CUSTOMER</Link>
+                    <Link to="/login" style={{marginLeft: "1000px"}} type="button" className="tgbtn btn btn-dark ">ADD CUSTOMER</Link>
                   </div>
                   <div style={{marginLeft: "0px"}}>
                    
