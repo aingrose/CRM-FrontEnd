@@ -20,7 +20,7 @@
 
 //       try {
 //         setLoading(true)
-//         let response = await axios.get("http://localhost:4000/clients");
+//         let response = await axios.get("https://capstoneproject-crm-backend-1.onrender.com/clients");
 //         console.log(response.data);
 //         setadata(response.data)
 //         setLoading(false)
