@@ -37,7 +37,7 @@ function NewMail({ mail }) {
         event.preventDefault();
         setLoading(true)
 
-        let response = await axios.post("http://localhost:5000/gmail", formState);
+        let response = await axios.post("https://capstoneproject-crm-backend-1.onrender.com/gmail", formState);
 
         if (response.status === 200) {
             alert("message sent");
