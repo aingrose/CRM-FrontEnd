@@ -49,7 +49,7 @@ function Register() {
     },
     onSubmit: async (values) => {
       try {
-        const response = await axios.post('https://capstoneproject-crm-backend-1.onrender.com/register', values);
+        const response = await axios.post('https://capstoneproject-crm-backend-2.onrender.com/register', values);
         console.log(response);
         if (response.status === 200) {
           alert('Registration successful');
