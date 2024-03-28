@@ -25,7 +25,7 @@ function NewRegister() {
 
        
             console.log(formdata)
-            const response = await axios.post("http://localhost:5000/create", formdata);
+            const response = await axios.post("https://capstoneproject-crm-backend-1.onrender.com/create", formdata);
              console.log(response)
              
             if (response.status === 201) {
