@@ -1,78 +1,208 @@
-import axios from "axios"
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import  express  from "express";
+import  {MongoClient}  from "mongodb";
+import  {storedb,getdata,createUser,getuserbyname,genPassword,getuser}  from "./helper.js";
+import cors from "cors";
+import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import 'dotenv/config'
 
 
+let app = express();
 
 
-function Login() {
-    const navingate = useNavigate();
+app.use(cors());
+app.use(express.json());
 
-    let [formdata,setformdata] = useState({
-        Username : "",
-        Password : ""
-    })
+// app.use(bodyParser.urlencoded({extended:false}));
+// app.use(bodyParser.json());
 
-    let handleChange = (e) =>{
-        const {name,value} = e.target
-       setformdata((prev)=>({...prev,[name]:value}));
-  
-      }
 
-    let handlesubmit = async (e) => {
-        e.preventDefault();
+let port = 5000
 
-            const response = await axios.post("https://capstoneproject-crm-backend-1.onrender.com/login", formdata);
-       
-            if (response.status === 200) {
-                alert("Login successfully");
-                 navingate("/register")
+const MONGO_URL = "mongodb+srv://Mahesh:8610382228@cluster0.0uefsyv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
-            } else {
-                alert("Invalid credential");
-            }
-       
+
+async function createconnetion(){
+    try{
+        const client = new MongoClient(MONGO_URL);
+        await client.connect();
+        console.log("Mongodb is connected");
+        return client;
     }
-  return (
-    <>
-        <>
-  <h1 className='mt-5 pt-5 ' style={{textAlign:"center"}}>LOGIN</h1>
+    catch(err){
+        console.log(err);
+        process.exit(1)
+    }
+   
+}  
+                                                                                                
+ export const client = await createconnetion()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+
+
+app.post("/register", async(req,res)=>{
+
+    try{
+        const {name,email,gender,state,contact,city,address} = req.body;
         
-<div className='container'>
-            <div className='row'>
-            <div className='col mt-5'style={{display:"flex",justifyContent:"center",alignItems:"center"}} >
 
-            <div className="card" style={{ width: "30rem",backgroundColor:"#EEEEEE" }}>
-                    <div className="card-body mt-4 "style={{height:"300px"}}>
-
-                        <form onSubmit={handlesubmit} >
-
-                            <div className="row mb-1">
-                                <label className="mb-2">USERNAME</label>
-                                <input id="email" type="text" name="Username" value={formdata.Username} style={{ borderRadius: "8px", border: "1px solid grey" }} className="input p-2" placeholder="Enter Uername" onChange={handleChange}/>
-                            </div>
-                            <div className="row mb-1">
-                                <label className="mb-2">PASSWORD</label>
-                                <input id="email" type="text" name="Password" value={formdata.Password} style={{ borderRadius: "8px", border: "1px solid grey" }} className="input p-2" placeholder="Enter Password" onChange={handleChange} />
-                            </div>
-                           
-                            <input type="submit" value="Submit" style={{padding:"8px 75px"}} className='btn btn-primary  mt-5 w-100' />
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            </div>
+        const storeddb =  await storedb(name,email,gender,state,contact,city,address);
+         res.send(storeddb)  
+         console.log("stooredb",storedb) 
+           
+    }
+    catch(err){
+      res.json({Error:"Internal server Error"})
+    }
+   
+});
 
 
+app.post("/create", async (req, res) => {
+    const { Username, Password } = req.body;
 
-            </div>
-    </>
+    try {
+        const isUserExist = await getuserbyname(Username);
+        if (isUserExist) {
+            return res.status(200).send({ message: 'User already exists' });
+        }
+
+        else if (!/^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[@!$%&_#]).{8,}$/g.test(Password)) {
+            return res.status(202).send({ message: "Password doesn't match" });
+        }
+
+        const hashPassword = await genPassword(Password);
+        const db = createUser(Username, hashPassword);
+        return res.status(201).json(db);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+app.post('/login', async(req,res)=>{
+    const {Username,Password} = req.body;
+ 
+
+  const  userfromdb = await getuser(Username);
+  console.log(userfromdb)
+
+   let passwordfromdb =  userfromdb.password
+
+
+  const ismatch = await bcrypt.compare(Password,passwordfromdb);
+
+
+if(!ismatch){
+   res.status(201).json({message: "invalid credential"})
+   return ;
+ }
+  else{   
+let token = jwt.sign({id:userfromdb._id},process.env.SECRET_KEY)
+console.log(token);
+
+return res.status(200).json({ message: "Successfully logged in", token: token })
+
+
+  }
+
+
+})
 
 
 
-    </>
-  )
-}
+// app.post("/create", async (req,res) => {
+//     try{
+//         let data = req.body
+//         let emailid=data.email
+        
+//         let userExist = await userData.findOne({"emailId":emailid})
+//         if(userExist){
+//             return res.json({error:"User already exits"}).status(400)
+//         }
+        
+//         const date = Date.now().toString();
 
-export default Login
+//         const hashPassword = async (password) => {
+//             return new Promise((resolve, reject) => {
+//                 bcrypt.hash(password, 10, (err, hash) => {
+//                     if (err) reject(err);
+//                     resolve(hash);
+//                 });
+//             });
+//         };
+        
+//         const hashedPassword = await hashPassword(data.pass.toString());
+//         const dataToInsert = {
+//             "userId": date,
+//             "emailId": data.email,
+//             "password": hashedPassword,
+            
+//         }
+
+
+//         let registerUser = await userData.insertOne(dataToInsert)
+    
+//         res.status(200).json({message:"User Registered Successfully",userId:date})
+//     }catch(error){
+//         res.status(500).json({ error: "Internal Server Error" });
+//     } 
+// })
+
+
+
+// app.post("/login",async(req,res)=>{
+//     const {username,password} =req.body;
+
+//     const userfromdb = await getuser(username,password);
+
+//     if(!userfromdb){
+//         res.send("invalid crecdial")
+//     }else{
+//         res.send("successfully logged")
+//     }
+     
+    
+// })
+
+app.get("/clients", async(req,res)=>{
+    const data =  await getdata();
+
+    res.json(data)
+
+})
+
+app.post("/gmail",(req,res)=>{
+
+  const {to,subject,message} = req.body;
+  
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'maheshrdrv@gmail.com',
+      pass: 'gpzozkacjhysjwyl'
+    }
+  });
+  
+  var mailOptions = {
+    from: "20eel10@kpriet.ac.in",
+    to: to,
+    subject: subject,
+    text: message
+  };
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+      console.log(error);
+    } else {
+        res.status(200).send('Email sent: ' + info.response)
+      console.log('Email sent: ' + info.response);
+    }
+  });
+  
+  
+})
+
+
+
+app.listen(port,()=>console.log(`port is listening on ${port}`))
